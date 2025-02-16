@@ -10,7 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import com.spektasoft.starterkit.ui.components.browser.Browser
-import com.spektasoft.starterkit.ui.theme.StarterKitTheme
+import com.spektasoft.starterkit.ui.theme.AppTheme
 import com.spektasoft.starterkit.util.loadEnvProperties
 
 class MainActivity : ComponentActivity() {
@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         val appUrl = env.getProperty("APP_URL")
 
         setContent {
-            StarterKitTheme {
+            AppTheme {
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
