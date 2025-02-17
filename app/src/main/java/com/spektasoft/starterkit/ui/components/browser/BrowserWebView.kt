@@ -1,7 +1,6 @@
 package com.spektasoft.starterkit.ui.components.browser
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.view.ViewGroup
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
@@ -41,9 +40,6 @@ fun BrowserWebView(
                     javaScriptEnabled = true
 
                     setSupportZoom(false)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        isAlgorithmicDarkeningAllowed = true
-                    }
                 }
                 this.loadUrl(baseUrl)
                 webView = this
