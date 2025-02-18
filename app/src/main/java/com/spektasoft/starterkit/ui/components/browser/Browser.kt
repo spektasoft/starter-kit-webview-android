@@ -27,18 +27,6 @@ fun Browser(baseUrl: String) {
             baseUrl = baseUrl,
             onUpdateProgress = { progress = it }
         )
-//        AnimatedVisibility(
-//            modifier = Modifier.fillMaxSize(), visible = progress in 0..99,
-//        ) {
-//            Column(
-//                modifier = Modifier
-//                    .fillMaxSize(),
-//                verticalArrangement = Arrangement.Center,
-//                horizontalAlignment = Alignment.CenterHorizontally
-//            ) {
-//                CircularProgressIndicator()
-//            }
-//        }
         AnimatedVisibility(
             modifier = Modifier.fillMaxWidth(), visible = progress in 0..99
         ) {
