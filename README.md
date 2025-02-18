@@ -28,6 +28,7 @@ This starter kit is meant to be used with [Starter Kit Laravel](https://github.c
 
 ## Attributions
 
+[ComposeWebKit (Dev Atrii)](https://github.com/DevAtrii/ComposeWebKit)
 [SuperWebView](https://github.com/roozbehzarei/SuperWebView)
 
 ## License

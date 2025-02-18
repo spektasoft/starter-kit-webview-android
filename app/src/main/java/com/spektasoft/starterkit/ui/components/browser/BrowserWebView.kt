@@ -1,61 +1,102 @@
 package com.spektasoft.starterkit.ui.components.browser
 
 import android.annotation.SuppressLint
-import android.os.Build
-import android.view.ViewGroup
+import android.os.Bundle
+import android.view.LayoutInflater
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.spektasoft.starterkit.R
 
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "InflateParams")
 @Composable
 fun BrowserWebView(
-    modifier: Modifier = Modifier,
     baseUrl: String,
-    isRefreshing: Boolean,
-    onSetRefreshed: () -> Unit,
+    modifier: Modifier = Modifier,
     onUpdateProgress: (Int) -> Unit
 ) {
+    if (LocalInspectionMode.current) return
+
     var webView: WebView? = null
 
-    BackHandler {
-        webView?.let {
-            if (it.canGoBack()) it.goBack()
+    var bundle by rememberSaveable { mutableStateOf<Bundle?>(null) }
+    var canGoBack by rememberSaveable { mutableStateOf(false) }
+    var progress by rememberSaveable { mutableIntStateOf(0) }
+
+    DisposableEffect(LocalLifecycleOwner.current) {
+        onDispose {
+            bundle = Bundle().also { bundle ->
+                webView?.saveState(bundle)
+            }
         }
     }
 
     AndroidView(
         modifier = modifier,
         factory = {
-            WebView(it).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
+            val view = LayoutInflater.from(it).inflate(R.layout.browser_web_view, null)
+            view.findViewById<WebView>(R.id.webView).apply {
                 webViewClient = BrowserWebViewClientCompat(baseUrl, it)
-                webChromeClient = BrowserWebChromeClient(onUpdateProgress)
+                webChromeClient = BrowserWebChromeClient { p ->
+                    progress = p
+                    onUpdateProgress(p)
+                }
                 with(this.settings) {
                     domStorageEnabled = true
                     javaScriptEnabled = true
 
                     setSupportZoom(false)
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        isAlgorithmicDarkeningAllowed = true
-                    }
                 }
-                this.loadUrl(baseUrl)
-                webView = this
+                bundle?.let { b -> restoreState(b) } ?: this.loadUrl(baseUrl)
             }
+            view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
+                setOnRefreshListener {
+                    webView?.reload()
+                }
+            }
+            view
         },
         update = {
-            if (isRefreshing) {
-                it.reload()
-                onSetRefreshed()
+            val mCircularProgressIndicator =
+                it.findViewById<CircularProgressIndicator>(R.id.circularProgressIndicator)
+            val mWebView = it.findViewById<WebView>(R.id.webView)
+            val mSwipeRefreshLayout = it.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
+
+            if (progress == 100) {
+                mSwipeRefreshLayout.isRefreshing = false
+                mWebView.visibility = VISIBLE
+                mCircularProgressIndicator.visibility = INVISIBLE
+            } else {
+                mWebView.visibility = INVISIBLE
+                if (!mSwipeRefreshLayout.isRefreshing) {
+                    mCircularProgressIndicator.visibility = VISIBLE
+                }
             }
 
-            webView = it
+            canGoBack = mWebView.canGoBack()
+            webView = mWebView
         }
     )
+
+    if (canGoBack) {
+        BackHandler {
+            webView?.let {
+                if (it.canGoBack()) it.goBack()
+            }
+        }
+    }
 }
