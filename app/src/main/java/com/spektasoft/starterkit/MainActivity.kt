@@ -19,8 +19,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val webChromeClientConfig = BrowserWebChromeClientConfig()
-
         setContent {
             AppTheme {
                 Surface(
@@ -31,7 +29,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     val env = loadEnvProperties()
                     val appUrl = env.getProperty("APP_URL")
-                    Browser(appUrl, webChromeClientConfig)
+                    Browser(appUrl)
                 }
             }
         }
