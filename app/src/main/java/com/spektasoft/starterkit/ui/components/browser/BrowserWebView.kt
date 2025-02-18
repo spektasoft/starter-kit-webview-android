@@ -1,7 +1,9 @@
 package com.spektasoft.starterkit.ui.components.browser
 
 import android.annotation.SuppressLint
-import android.view.ViewGroup
+import android.view.LayoutInflater
+import android.view.View.INVISIBLE
+import android.view.View.VISIBLE
 import android.webkit.WebView
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
@@ -10,17 +12,21 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.core.view.children
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.progressindicator.CircularProgressIndicator
+import com.spektasoft.starterkit.R
 
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "InflateParams")
 @Composable
 fun BrowserWebView(
     modifier: Modifier = Modifier,
     baseUrl: String,
     onUpdateProgress: (Int) -> Unit
 ) {
+    if (LocalInspectionMode.current) return
+
     var webView: WebView? = null
 
     var progress by rememberSaveable { mutableIntStateOf(0) }
@@ -34,11 +40,8 @@ fun BrowserWebView(
     AndroidView(
         modifier = modifier,
         factory = {
-            val mWebView = WebView(it).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
+            val view = LayoutInflater.from(it).inflate(R.layout.browser_web_view, null)
+            view.findViewById<WebView>(R.id.webView).apply {
                 webViewClient = BrowserWebViewClientCompat(baseUrl, it)
                 webChromeClient = BrowserWebChromeClient { p ->
                     progress = p
@@ -53,27 +56,31 @@ fun BrowserWebView(
                 this.loadUrl(baseUrl)
                 webView = this
             }
-
-            val mSwipeRefreshLayout = SwipeRefreshLayout(it).apply {
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-                addView(mWebView)
+            view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
                 setOnRefreshListener {
                     webView?.reload()
                 }
             }
-
-            mSwipeRefreshLayout
+            view
         },
         update = {
+            val mCircularProgressIndicator =
+                it.findViewById<CircularProgressIndicator>(R.id.circularProgressIndicator)
+            val mWebView = it.findViewById<WebView>(R.id.webView)
+            val mSwipeRefreshLayout = it.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
+
             if (progress == 100) {
-                it.isRefreshing = false
+                mSwipeRefreshLayout.isRefreshing = false
+                mWebView.visibility = VISIBLE
+                mCircularProgressIndicator.visibility = INVISIBLE
+            } else {
+                mWebView.visibility = INVISIBLE
+                if (!mSwipeRefreshLayout.isRefreshing) {
+                    mCircularProgressIndicator.visibility = VISIBLE
+                }
             }
-            webView = it.children.first { c ->
-                c is WebView
-            } as? WebView
+
+            webView = mWebView
         }
     )
 }
