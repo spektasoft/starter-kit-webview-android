@@ -19,9 +19,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val env = loadEnvProperties(this)
-        val appUrl = env.getProperty("APP_URL")
-
         val webChromeClientConfig = BrowserWebChromeClientConfig()
 
         setContent {
@@ -32,6 +29,8 @@ class MainActivity : ComponentActivity() {
                         .safeDrawingPadding(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val env = loadEnvProperties()
+                    val appUrl = env.getProperty("APP_URL")
                     Browser(appUrl, webChromeClientConfig)
                 }
             }
