@@ -34,13 +34,8 @@ fun BrowserWebView(
     var webView: WebView? = null
 
     var bundle by rememberSaveable { mutableStateOf<Bundle?>(null) }
+    var canGoBack by rememberSaveable { mutableStateOf(false) }
     var progress by rememberSaveable { mutableIntStateOf(0) }
-
-    BackHandler {
-        webView?.let {
-            if (it.canGoBack()) it.goBack()
-        }
-    }
 
     DisposableEffect(LocalLifecycleOwner.current) {
         onDispose {
@@ -67,7 +62,6 @@ fun BrowserWebView(
                     setSupportZoom(false)
                 }
                 bundle?.let { b -> restoreState(b) } ?: this.loadUrl(baseUrl)
-                webView = this
             }
             view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
                 setOnRefreshListener {
@@ -93,7 +87,16 @@ fun BrowserWebView(
                 }
             }
 
+            canGoBack = mWebView.canGoBack()
             webView = mWebView
         }
     )
+
+    if (canGoBack) {
+        BackHandler {
+            webView?.let {
+                if (it.canGoBack()) it.goBack()
+            }
+        }
+    }
 }
