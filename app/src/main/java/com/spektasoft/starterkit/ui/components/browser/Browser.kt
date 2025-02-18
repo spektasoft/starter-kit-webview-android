@@ -13,11 +13,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebChromeClientConfig
 import com.spektasoft.starterkit.ui.theme.AppTheme
 
 @Composable
-fun Browser(baseUrl: String) {
+fun Browser(
+    baseUrl: String,
+    webChromeClientConfig: BrowserWebChromeClientConfig,
+) {
     var progress by rememberSaveable { mutableIntStateOf(0) }
+
+    val mWebChromeClientConfig = webChromeClientConfig.copy(
+        progressChangedHandler = { p ->
+            progress = p
+            webChromeClientConfig.progressChangedHandler(p)
+        }
+    )
 
     Box(
         Modifier
@@ -25,7 +36,7 @@ fun Browser(baseUrl: String) {
     ) {
         BrowserWebView(
             baseUrl = baseUrl,
-            onUpdateProgress = { progress = it }
+            webChromeClientConfig = mWebChromeClientConfig
         )
         AnimatedVisibility(
             modifier = Modifier.fillMaxWidth(), visible = progress in 0..99
@@ -39,6 +50,6 @@ fun Browser(baseUrl: String) {
 @Composable
 fun BrowserPreview() {
     AppTheme {
-        Browser("")
+        Browser("", BrowserWebChromeClientConfig())
     }
 }
