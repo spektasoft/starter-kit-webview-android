@@ -21,13 +21,14 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.spektasoft.starterkit.R
+import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebChromeClientConfig
 
 @SuppressLint("SetJavaScriptEnabled", "InflateParams")
 @Composable
 fun BrowserWebView(
     baseUrl: String,
     modifier: Modifier = Modifier,
-    onUpdateProgress: (Int) -> Unit
+    webChromeClientConfig: BrowserWebChromeClientConfig,
 ) {
     if (LocalInspectionMode.current) return
 
@@ -36,6 +37,13 @@ fun BrowserWebView(
     var bundle by rememberSaveable { mutableStateOf<Bundle?>(null) }
     var canGoBack by rememberSaveable { mutableStateOf(false) }
     var progress by rememberSaveable { mutableIntStateOf(0) }
+
+    val mWebChromeClientConfig = webChromeClientConfig.copy(
+        progressChangedHandler = { p ->
+            progress = p
+            webChromeClientConfig.progressChangedHandler(p)
+        }
+    )
 
     DisposableEffect(LocalLifecycleOwner.current) {
         onDispose {
@@ -51,10 +59,7 @@ fun BrowserWebView(
             val view = LayoutInflater.from(it).inflate(R.layout.browser_web_view, null)
             view.findViewById<WebView>(R.id.webView).apply {
                 webViewClient = BrowserWebViewClientCompat(baseUrl, it)
-                webChromeClient = BrowserWebChromeClient { p ->
-                    progress = p
-                    onUpdateProgress(p)
-                }
+                webChromeClient = BrowserWebChromeClient(mWebChromeClientConfig)
                 with(this.settings) {
                     domStorageEnabled = true
                     javaScriptEnabled = true
