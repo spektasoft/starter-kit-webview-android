@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View.INVISIBLE
 import android.view.View.VISIBLE
 import android.webkit.WebView
+import android.widget.LinearLayout
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -19,7 +20,6 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.spektasoft.starterkit.R
 import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebChromeClientConfig
 
@@ -66,6 +66,7 @@ fun BrowserWebView(
 
                     setSupportZoom(false)
                 }
+                addJavascriptInterface(BrowserInterface(it), "Android")
                 bundle?.let { b -> restoreState(b) } ?: this.loadUrl(baseUrl)
             }
             view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
@@ -76,19 +77,19 @@ fun BrowserWebView(
             view
         },
         update = {
-            val mCircularProgressIndicator =
-                it.findViewById<CircularProgressIndicator>(R.id.circularProgressIndicator)
+            val mCircularProgressContainer =
+                it.findViewById<LinearLayout>(R.id.circularProgressContainer)
             val mWebView = it.findViewById<WebView>(R.id.webView)
             val mSwipeRefreshLayout = it.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
 
             if (progress == 100) {
                 mSwipeRefreshLayout.isRefreshing = false
                 mWebView.visibility = VISIBLE
-                mCircularProgressIndicator.visibility = INVISIBLE
+                mCircularProgressContainer.visibility = INVISIBLE
             } else {
                 mWebView.visibility = INVISIBLE
                 if (!mSwipeRefreshLayout.isRefreshing) {
-                    mCircularProgressIndicator.visibility = VISIBLE
+                    mCircularProgressContainer.visibility = VISIBLE
                 }
             }
 
