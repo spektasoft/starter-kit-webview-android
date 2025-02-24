@@ -15,8 +15,16 @@ suspend fun Context.getLanguage(): String {
     }.first()
 }
 
-suspend fun Context.setLanguage(language: String) {
+suspend fun Context.setLanguage(language: String): Boolean {
+    val currentLanguage = getLanguage()
+
+    if (currentLanguage == language) {
+        return false
+    }
+
     settingsDataStore.edit {
         it[LANGUAGE] = language
     }
+
+    return true
 }

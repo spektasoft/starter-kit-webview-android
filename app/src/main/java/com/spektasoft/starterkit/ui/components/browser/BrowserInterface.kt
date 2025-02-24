@@ -13,8 +13,9 @@ class BrowserInterface(private val context: Context) {
         val activity = context as? ComponentActivity ?: return
 
         activity.lifecycleScope.launch {
-            activity.setLanguage(language)
-            activity.recreate()
+            if (activity.setLanguage(language)) {
+                activity.recreate()
+            }
         }
     }
 }
