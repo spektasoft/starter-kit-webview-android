@@ -1,3 +1,7 @@
 <resources>
-    <string name="app_name">Starter Kit</string>
+    <string name="app_name" translatable="false">Starter Kit</string>
+    <string name="loading">Loading…</string>
+    <string name="open_link_confirmation">This link will be opened in an external application. Continue?</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
 </resources>
