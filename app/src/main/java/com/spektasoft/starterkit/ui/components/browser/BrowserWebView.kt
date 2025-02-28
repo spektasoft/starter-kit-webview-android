@@ -10,6 +10,7 @@ import android.view.View.VISIBLE
 import android.webkit.WebView
 import android.widget.LinearLayout
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -19,11 +20,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.spektasoft.starterkit.R
 import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebChromeClientConfig
 import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebViewClientCompatConfig
@@ -79,10 +82,26 @@ fun BrowserWebView(
         }
     }
 
+    val colorPrimary = MaterialTheme.colorScheme.primary
+    val colorSecondary = MaterialTheme.colorScheme.secondary
+    val colorTertiary = MaterialTheme.colorScheme.tertiary
     AndroidView(
         modifier = modifier,
         factory = {
             val view = LayoutInflater.from(it).inflate(R.layout.browser_web_view, null)
+            view.findViewById<CircularProgressIndicator>(R.id.circularProgressIndicator).apply {
+                setIndicatorColor(colorPrimary.toArgb())
+            }
+            view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
+                setColorSchemeColors(
+                    colorPrimary.toArgb(),
+                    colorSecondary.toArgb(),
+                    colorTertiary.toArgb()
+                )
+                setOnRefreshListener {
+                    webView?.reload()
+                }
+            }
             view.findViewById<WebView>(R.id.webView).apply {
                 webChromeClient = BrowserWebChromeClient(mWebChromeClientConfig)
                 webViewClient = BrowserWebViewClientCompat(mWebViewClientCompatConfig)
@@ -94,11 +113,6 @@ fun BrowserWebView(
                 }
                 addJavascriptInterface(BrowserInterface(it), "Android")
                 bundle?.let { b -> restoreState(b) } ?: this.loadUrl(baseUrl)
-            }
-            view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
-                setOnRefreshListener {
-                    webView?.reload()
-                }
             }
             view
         },
