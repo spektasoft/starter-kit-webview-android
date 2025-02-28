@@ -34,6 +34,8 @@ import com.spektasoft.starterkit.ui.components.browser.config.BrowserInterfaceCo
 import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebChromeClientConfig
 import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebViewClientCompatConfig
 import com.spektasoft.starterkit.util.setLanguage
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("SetJavaScriptEnabled", "InflateParams")
@@ -58,7 +60,31 @@ fun BrowserWebView(
     var progress by rememberSaveable { mutableIntStateOf(0) }
     var openLinkDialog by remember { mutableStateOf<String?>(null) }
 
+    var isNavigating by remember { mutableStateOf(false) }
+    var navigateJob by remember { mutableStateOf<Job?>(null) }
     val mBrowserInterfaceConfig = browserInterfaceConfig.copy(
+        onNavigate = {
+            browserInterfaceConfig.onNavigate()
+            isNavigating = true
+            progress = 10
+            navigateJob?.cancel()
+            navigateJob = lifecycleOwner.lifecycleScope.launch {
+                while (progress < 99) {
+                    if (progress + 10 > 99) {
+                        progress = 99
+                    } else {
+                        progress += 10
+                    }
+                    delay(500)
+                }
+            }
+        },
+        onNavigated = {
+            browserInterfaceConfig.onNavigated()
+            navigateJob?.cancel()
+            isNavigating = false
+            progress = 100
+        },
         onSwitchLanguage = {
             browserInterfaceConfig.onSwitchLanguage(it)
             lifecycleOwner.lifecycleScope.launch {
@@ -73,8 +99,10 @@ fun BrowserWebView(
 
     val mBrowserWebChromeClientConfig = browserWebChromeClientConfig.copy(
         progressChangedHandler = { p ->
-            browserWebChromeClientConfig.progressChangedHandler(p)
-            progress = p
+            if (!isNavigating) {
+                browserWebChromeClientConfig.progressChangedHandler(p)
+                progress = p
+            }
         }
     )
 
@@ -122,6 +150,7 @@ fun BrowserWebView(
                     colorTertiary.toArgb()
                 )
                 setOnRefreshListener {
+                    mBrowserInterfaceConfig.onNavigated()
                     webView?.reload()
                 }
             }
@@ -147,12 +176,10 @@ fun BrowserWebView(
             val mWebView = it.findViewById<WebView>(R.id.webView)
             val mSwipeRefreshLayout = it.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
 
-            if (progress <= 10 || progress == 100) {
+            if (progress == 100) {
                 mWebView.visibility = VISIBLE
                 mCircularProgressContainer.visibility = INVISIBLE
-                if (progress == 100) {
-                    mSwipeRefreshLayout.isRefreshing = false
-                }
+                mSwipeRefreshLayout.isRefreshing = false
             } else {
                 mWebView.visibility = INVISIBLE
                 if (!mSwipeRefreshLayout.isRefreshing) {
