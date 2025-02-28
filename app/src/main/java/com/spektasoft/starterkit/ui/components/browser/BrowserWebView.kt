@@ -42,8 +42,8 @@ fun BrowserWebView(
     baseUrl: String,
     modifier: Modifier = Modifier,
     browserInterfaceConfig: BrowserInterfaceConfig = BrowserInterfaceConfig(),
-    webChromeClientConfig: BrowserWebChromeClientConfig = BrowserWebChromeClientConfig(),
-    webViewClientCompatConfig: BrowserWebViewClientCompatConfig = BrowserWebViewClientCompatConfig(),
+    browserWebChromeClientConfig: BrowserWebChromeClientConfig = BrowserWebChromeClientConfig(),
+    browserWebViewClientCompatConfig: BrowserWebViewClientCompatConfig = BrowserWebViewClientCompatConfig(),
 ) {
     if (LocalInspectionMode.current) return
 
@@ -71,17 +71,17 @@ fun BrowserWebView(
         }
     )
 
-    val mWebChromeClientConfig = webChromeClientConfig.copy(
+    val mBrowserWebChromeClientConfig = browserWebChromeClientConfig.copy(
         progressChangedHandler = { p ->
+            browserWebChromeClientConfig.progressChangedHandler(p)
             progress = p
-            webChromeClientConfig.progressChangedHandler(p)
         }
     )
 
-    val mWebViewClientCompatConfig = webViewClientCompatConfig.copy(
+    val mBrowserWebViewClientCompatConfig = browserWebViewClientCompatConfig.copy(
         shouldOverrideUrlLoadingHandler = { view, request ->
             val isOverridden =
-                webViewClientCompatConfig.shouldOverrideUrlLoadingHandler(view, request)
+                browserWebViewClientCompatConfig.shouldOverrideUrlLoadingHandler(view, request)
 
             if (isOverridden) {
                 return@copy true
@@ -126,8 +126,8 @@ fun BrowserWebView(
                 }
             }
             view.findViewById<WebView>(R.id.webView).apply {
-                webChromeClient = BrowserWebChromeClient(mWebChromeClientConfig)
-                webViewClient = BrowserWebViewClientCompat(mWebViewClientCompatConfig)
+                webChromeClient = BrowserWebChromeClient(mBrowserWebChromeClientConfig)
+                webViewClient = BrowserWebViewClientCompat(mBrowserWebViewClientCompatConfig)
                 with(this.settings) {
                     domStorageEnabled = true
                     javaScriptEnabled = true

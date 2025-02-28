@@ -21,7 +21,7 @@ import com.spektasoft.starterkit.ui.theme.AppTheme
 fun Browser(baseUrl: String) {
     var progress by rememberSaveable { mutableIntStateOf(0) }
 
-    val mWebChromeClientConfig = BrowserWebChromeClientConfig(
+    val browserWebChromeClientConfig = BrowserWebChromeClientConfig(
         progressChangedHandler = { p ->
             progress = p
         }
@@ -33,7 +33,7 @@ fun Browser(baseUrl: String) {
     ) {
         BrowserWebView(
             baseUrl = baseUrl,
-            webChromeClientConfig = mWebChromeClientConfig
+            browserWebChromeClientConfig = browserWebChromeClientConfig
         )
         AnimatedVisibility(
             modifier = Modifier.fillMaxWidth(), visible = progress in 0..99
