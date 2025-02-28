@@ -10,6 +10,7 @@ import android.view.View.VISIBLE
 import android.webkit.WebView
 import android.widget.LinearLayout
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -25,21 +26,30 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.lifecycleScope
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.progressindicator.CircularProgressIndicator
 import com.spektasoft.starterkit.R
+import com.spektasoft.starterkit.ui.components.browser.config.BrowserInterfaceConfig
 import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebChromeClientConfig
 import com.spektasoft.starterkit.ui.components.browser.config.BrowserWebViewClientCompatConfig
+import com.spektasoft.starterkit.util.setLanguage
+import kotlinx.coroutines.launch
 
 @SuppressLint("SetJavaScriptEnabled", "InflateParams")
 @Composable
 fun BrowserWebView(
     baseUrl: String,
     modifier: Modifier = Modifier,
+    browserInterfaceConfig: BrowserInterfaceConfig = BrowserInterfaceConfig(),
     webChromeClientConfig: BrowserWebChromeClientConfig = BrowserWebChromeClientConfig(),
     webViewClientCompatConfig: BrowserWebViewClientCompatConfig = BrowserWebViewClientCompatConfig(),
 ) {
     if (LocalInspectionMode.current) return
+
+    val activity = LocalActivity.current
+    val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
 
     var webView: WebView? = null
 
@@ -47,6 +57,19 @@ fun BrowserWebView(
     var canGoBack by rememberSaveable { mutableStateOf(false) }
     var progress by rememberSaveable { mutableIntStateOf(0) }
     var openLinkDialog by remember { mutableStateOf<String?>(null) }
+
+    val mBrowserInterfaceConfig = browserInterfaceConfig.copy(
+        onSwitchLanguage = {
+            browserInterfaceConfig.onSwitchLanguage(it)
+            lifecycleOwner.lifecycleScope.launch {
+                activity?.run {
+                    if (setLanguage(it)) {
+                        recreate()
+                    }
+                }
+            }
+        }
+    )
 
     val mWebChromeClientConfig = webChromeClientConfig.copy(
         progressChangedHandler = { p ->
@@ -74,7 +97,7 @@ fun BrowserWebView(
         }
     )
 
-    DisposableEffect(LocalLifecycleOwner.current) {
+    DisposableEffect(lifecycleOwner) {
         onDispose {
             bundle = Bundle().also { bundle ->
                 webView?.saveState(bundle)
@@ -111,7 +134,9 @@ fun BrowserWebView(
 
                     setSupportZoom(false)
                 }
-                addJavascriptInterface(BrowserInterface(it), "Android")
+                addJavascriptInterface(
+                    BrowserInterface(mBrowserInterfaceConfig), "Android"
+                )
                 bundle?.let { b -> restoreState(b) } ?: this.loadUrl(baseUrl)
             }
             view
@@ -122,10 +147,12 @@ fun BrowserWebView(
             val mWebView = it.findViewById<WebView>(R.id.webView)
             val mSwipeRefreshLayout = it.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
 
-            if (progress == 100) {
-                mSwipeRefreshLayout.isRefreshing = false
+            if (progress <= 10 || progress == 100) {
                 mWebView.visibility = VISIBLE
                 mCircularProgressContainer.visibility = INVISIBLE
+                if (progress == 100) {
+                    mSwipeRefreshLayout.isRefreshing = false
+                }
             } else {
                 mWebView.visibility = INVISIBLE
                 if (!mSwipeRefreshLayout.isRefreshing) {
@@ -146,7 +173,6 @@ fun BrowserWebView(
         }
     }
 
-    val context = LocalContext.current
     openLinkDialog?.let {
         OpenLinkDialog(
             onConfirm = {
