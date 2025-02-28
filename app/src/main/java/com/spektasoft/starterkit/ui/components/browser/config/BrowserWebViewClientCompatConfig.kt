@@ -7,5 +7,5 @@ data class BrowserWebViewClientCompatConfig(
     val shouldOverrideUrlLoadingHandler: (
         WebView,
         WebResourceRequest
-    ) -> Boolean = { _, _ -> true },
+    ) -> Boolean = { _, _ -> false },
 )

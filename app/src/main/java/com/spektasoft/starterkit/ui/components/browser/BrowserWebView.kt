@@ -53,7 +53,14 @@ fun BrowserWebView(
     )
 
     val mWebViewClientCompatConfig = webViewClientCompatConfig.copy(
-        shouldOverrideUrlLoadingHandler = { _, request ->
+        shouldOverrideUrlLoadingHandler = { view, request ->
+            val isOverridden =
+                webViewClientCompatConfig.shouldOverrideUrlLoadingHandler(view, request)
+
+            if (isOverridden) {
+                return@copy true
+            }
+
             if (request.url.toString().startsWith(baseUrl)) {
                 return@copy false
             }
