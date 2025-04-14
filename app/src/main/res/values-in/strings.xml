@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="error_message">Ups! Terjadi kesalahan.\nSilakan cek koneksi internet Anda atau coba lagi nanti.</string>
+    <string name="error_icon_description">Ikon Galat</string>
     <string name="loading">Memuat…</string>
     <string name="no">Tidak</string>
     <string name="open_link_confirmation">Tautan ini akan dibuka di aplikasi eksternal. Lanjutkan?</string>
+    <string name="retry">Coba Lagi</string>
     <string name="yes">Ya</string>
 </resources>
