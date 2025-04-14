@@ -1,6 +1,8 @@
 package com.spektasoft.starterkit.ui.components.browser
 
+import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.os.Build
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -34,6 +36,22 @@ fun Browser(baseUrl: String) {
     var isNavigating by remember { mutableStateOf(false) }
     var navigateJob by remember { mutableStateOf<Job?>(null) }
     val browserInterfaceConfig = BrowserInterfaceConfig(
+        getPackageName = { context ->
+            context.packageName
+        },
+        getVersionCode = { context ->
+            try {
+                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) { // Build.VERSION_CODES.R is API level30 (Android 11) where versionCode is deprecated
+                    pInfo.longVersionCode // Use longVersionCode for Android 11 and above, cast to Int
+                } else {
+                    @Suppress("DEPRECATION")
+                    pInfo.versionCode.toLong() // Use versionCode for older versions
+                }
+            } catch (e: PackageManager.NameNotFoundException) {
+                null
+            }
+        },
         onNavigate = {
             isNavigating = true
             progress = 10

@@ -176,7 +176,7 @@ fun BrowserWebView(
                     setSupportZoom(false)
                 }
                 addJavascriptInterface(
-                    BrowserInterface(mBrowserInterfaceConfig), "Android"
+                    BrowserInterface(mBrowserInterfaceConfig, context), "Android"
                 )
                 bundle?.let { b -> restoreState(b) } ?: this.loadUrl(baseUrl)
             }
