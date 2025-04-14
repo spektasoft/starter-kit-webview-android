@@ -133,9 +133,11 @@ fun BrowserWebView(
         }
     }
 
+    val colorSurfaceVariant = MaterialTheme.colorScheme.surfaceVariant
     val colorPrimary = MaterialTheme.colorScheme.primary
     val colorSecondary = MaterialTheme.colorScheme.secondary
     val colorTertiary = MaterialTheme.colorScheme.tertiary
+
     AndroidView(
         modifier = modifier,
         factory = {
@@ -144,6 +146,7 @@ fun BrowserWebView(
                 setIndicatorColor(colorPrimary.toArgb())
             }
             view.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout).apply {
+                setProgressBackgroundColorSchemeColor(colorSurfaceVariant.toArgb())
                 setColorSchemeColors(
                     colorPrimary.toArgb(),
                     colorSecondary.toArgb(),
