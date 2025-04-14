@@ -59,9 +59,10 @@ fun BrowserWebView(
     var canGoBack by rememberSaveable { mutableStateOf(false) }
     var progress by rememberSaveable { mutableIntStateOf(0) }
     var openLinkDialog by remember { mutableStateOf<String?>(null) }
-
+    var isError by rememberSaveable { mutableStateOf(false) } // Add error state
     var isNavigating by remember { mutableStateOf(false) }
     var navigateJob by remember { mutableStateOf<Job?>(null) }
+
     val mBrowserInterfaceConfig = browserInterfaceConfig.copy(
         onNavigate = {
             browserInterfaceConfig.onNavigate()
@@ -108,6 +109,8 @@ fun BrowserWebView(
 
     val mBrowserWebViewClientCompatConfig = browserWebViewClientCompatConfig.copy(
         shouldOverrideUrlLoadingHandler = { view, request ->
+            isError = false // Reset error state on new navigation
+
             val isOverridden =
                 browserWebViewClientCompatConfig.shouldOverrideUrlLoadingHandler(view, request)
 
@@ -122,7 +125,13 @@ fun BrowserWebView(
             openLinkDialog = request.url.toString()
 
             true
-        }
+        },
+        onReceivedErrorHandler = { view, request, error ->
+            if (request.isForMainFrame) { // Ensure the error is for the main frame
+                isError = true // Set error state on error
+            }
+            browserWebViewClientCompatConfig.onReceivedErrorHandler(view, request, error)
+        } // Handle error here
     )
 
     DisposableEffect(lifecycleOwner) {
@@ -179,14 +188,20 @@ fun BrowserWebView(
             val mWebView = it.findViewById<WebView>(R.id.webView)
             val mSwipeRefreshLayout = it.findViewById<SwipeRefreshLayout>(R.id.swipeRefreshLayout)
 
-            if (progress == 100) {
-                mWebView.visibility = VISIBLE
-                mCircularProgressContainer.visibility = INVISIBLE
-                mSwipeRefreshLayout.isRefreshing = false
-            } else {
+            if (isError) { // Show error view if isError is true
                 mWebView.visibility = INVISIBLE
-                if (!mSwipeRefreshLayout.isRefreshing) {
-                    mCircularProgressContainer.visibility = VISIBLE
+                mCircularProgressContainer.visibility = INVISIBLE // Hide progress
+                mSwipeRefreshLayout.isRefreshing = false // Stop refreshing if error
+            } else {
+                if (progress == 100) {
+                    mWebView.visibility = VISIBLE
+                    mCircularProgressContainer.visibility = INVISIBLE
+                    mSwipeRefreshLayout.isRefreshing = false
+                } else {
+                    mWebView.visibility = INVISIBLE
+                    if (!mSwipeRefreshLayout.isRefreshing) {
+                        mCircularProgressContainer.visibility = VISIBLE
+                    }
                 }
             }
 
@@ -201,6 +216,15 @@ fun BrowserWebView(
                 if (it.canGoBack()) it.goBack()
             }
         }
+    }
+
+    if (isError) { // Show ErrorView Composable when isError is true
+        BrowserErrorView(
+            onRetry = {
+                webView?.reload()
+                isError = false
+            }
+        )
     }
 
     openLinkDialog?.let {
